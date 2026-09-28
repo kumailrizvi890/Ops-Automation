@@ -1,0 +1,10 @@
+{
+  "name": "ops-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Scheduled task automation dashboard - real jobs, real logs, no mock timers.",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ops Automation - Scheduled Workflow Dashboard</title>
+<meta name="description" content="Real scheduled workflow automation dashboard - live job execution, not mocked timers." />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      Ops Automation
+    </div>
+    <div class="subhead">Live workflow runner &amp; scheduler</div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h1>Scheduled task automation dashboard</h1>
+      <p>
+        Four small automations, each doing genuine work: a live remote-jobs crawl, a real
+        network check against sample leads, an actual free/busy interval-intersection
+        scheduler, and follow-up drafting from real date math. One runs automatically every
+        day; you can also trigger any of them right now below and watch the log update live.
+      </p>
+    </section>
+
+    <section class="jobs" id="jobs"></section>
+
+    <section class="log-section">
+      <div class="log-header">
+        <h2>Run log</h2>
+        <button id="refresh" class="ghost-btn">Refresh</button>
+      </div>
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Workflow</th>
+            <th>Status</th>
+            <th>Duration</th>
+            <th>Source</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody id="log-body">
+          <tr><td colspan="5" class="empty">Loading run history…</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="output-section" id="output-section" hidden>
+      <h2>Last run output</h2>
+      <pre id="output-body"></pre>
+    </section>
+  </main>
+
+  <footer>
+    Runs log to a shared Supabase table via Supabase's public anon key (read/insert only, gated by row-level security) - this is a public demo, so run history is visible to everyone who opens this page.
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
