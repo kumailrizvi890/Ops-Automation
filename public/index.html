@@ -3,58 +3,147 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ops Automation - Scheduled Workflow Dashboard</title>
+<title>Ops Automation — Scheduled Workflow Dashboard</title>
 <meta name="description" content="Real scheduled workflow automation dashboard - live job execution, not mocked timers." />
 <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="dot"></span>
-      Ops Automation
+      <span class="logo">OA</span>
+      <span class="brand-name">Ops<strong>Automation</strong></span>
     </div>
-    <div class="subhead">Live workflow runner &amp; scheduler</div>
+    <nav class="tabs" id="nav-tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="workflows">Workflows</button>
+      <button class="tab" data-tab="activity">Activity</button>
+      <button class="tab" data-tab="schedule">Schedule</button>
+    </nav>
+    <div class="header-stats">
+      <div class="hstat"><span class="hlabel">Runs (last 25)</span><span class="hvalue" id="hs-runs">—</span></div>
+      <div class="hstat"><span class="hlabel">Success Rate</span><span class="hvalue" id="hs-success">—</span></div>
+      <div class="hstat"><span class="hlabel">Avg Duration</span><span class="hvalue" id="hs-duration">—</span></div>
+      <div class="hstat"><span class="hlabel">Next Run</span><span class="hvalue" id="hs-next">—</span></div>
+    </div>
+    <div class="header-badges">
+      <span class="live-badge" id="live-badge"><span class="dot"></span>LIVE</span>
+      <span class="count-tag" id="count-tag">4 workflows</span>
+    </div>
   </header>
 
-  <main>
-    <section class="intro">
-      <h1>Scheduled task automation dashboard</h1>
-      <p>
-        Four small automations, each doing genuine work: a live remote-jobs crawl, a real
-        network check against sample leads, an actual free/busy interval-intersection
-        scheduler, and follow-up drafting from real date math. One runs automatically every
-        day; you can also trigger any of them right now below and watch the log update live.
-      </p>
-    </section>
+  <div class="layout">
+    <main class="main-panel">
 
-    <section class="jobs" id="jobs"></section>
+      <section id="panel-overview" class="panel-view active">
+        <div class="intro">
+          <h1>Scheduled task automation, running for real</h1>
+          <p>
+            Four small automations, each doing genuine work: a live remote-jobs crawl, a real
+            network check against sample leads, an actual free/busy interval-intersection
+            scheduler, and follow-up drafting from real date math. One runs automatically every
+            day via Vercel Cron; you can trigger any of them on demand and watch the log update
+            live below.
+          </p>
+        </div>
 
-    <section class="log-section">
-      <div class="log-header">
-        <h2>Run log</h2>
-        <button id="refresh" class="ghost-btn">Refresh</button>
+        <div class="stat-cards" id="stat-cards"></div>
+
+        <div class="section-head">
+          <h2>Workflows</h2>
+          <span class="section-sub">Click a card's tab above or run one directly</span>
+        </div>
+        <div class="jobs" id="jobs-overview"></div>
+
+        <div class="section-head">
+          <h2>Recent activity</h2>
+          <button class="link-btn" data-goto="activity">View all →</button>
+        </div>
+        <table class="log-table compact">
+          <thead>
+            <tr><th>Workflow</th><th>Status</th><th>Duration</th><th>Source</th><th>When</th></tr>
+          </thead>
+          <tbody id="log-body-preview"><tr><td colspan="5" class="empty">Loading run history…</td></tr></tbody>
+        </table>
+      </section>
+
+      <section id="panel-workflows" class="panel-view">
+        <div class="section-head">
+          <h2>Run a workflow</h2>
+          <span class="section-sub">Every run is real — no timers, no canned output</span>
+        </div>
+        <div class="jobs jobs-large" id="jobs-full"></div>
+      </section>
+
+      <section id="panel-activity" class="panel-view">
+        <div class="section-head">
+          <h2>Run log</h2>
+          <div class="head-actions">
+            <select id="filter-workflow" class="filter-select">
+              <option value="">All workflows</option>
+            </select>
+            <button id="run-all-btn" class="run-all-btn">Run all now</button>
+            <button id="refresh" class="ghost-btn">Refresh</button>
+          </div>
+        </div>
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Workflow</th>
+              <th>Status</th>
+              <th>Duration</th>
+              <th>Source</th>
+              <th>When</th>
+            </tr>
+          </thead>
+          <tbody id="log-body">
+            <tr><td colspan="5" class="empty">Loading run history…</td></tr>
+          </tbody>
+        </table>
+
+        <div class="output-section" id="output-section" hidden>
+          <h2>Last run output</h2>
+          <pre id="output-body"></pre>
+        </div>
+      </section>
+
+      <section id="panel-schedule" class="panel-view">
+        <div class="section-head">
+          <h2>Automation schedule</h2>
+        </div>
+        <div class="card">
+          <p>A Vercel Cron job hits <code>/api/cron</code> once a day and runs one randomly-selected workflow from the four below, logging it with source <code>scheduled</code> so it's visibly distinct from a visitor-triggered run in the log.</p>
+          <div class="kv-grid">
+            <div><span>Cron expression</span><strong>0 13 * * * (UTC, daily)</strong></div>
+            <div><span>Endpoint</span><strong>/api/cron</strong></div>
+            <div><span>Next scheduled run</span><strong id="sched-next">—</strong></div>
+            <div><span>Selection</span><strong>random of 4, logged as "scheduled"</strong></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Candidate workflows</h3>
+          <div id="schedule-list" class="schedule-list"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="sidebar-right">
+      <div class="card system-card">
+        <div class="sc-head">System</div>
+        <div class="kv-grid kv-grid-tight">
+          <div><span>Storage</span><strong>Supabase (anon, RLS)</strong></div>
+          <div><span>Table</span><strong class="mono">workflow_runs</strong></div>
+          <div><span>Runtime</span><strong>Vercel Node functions</strong></div>
+          <div><span>Session</span><strong id="sc-uptime">0s</strong></div>
+        </div>
       </div>
-      <table class="log-table">
-        <thead>
-          <tr>
-            <th>Workflow</th>
-            <th>Status</th>
-            <th>Duration</th>
-            <th>Source</th>
-            <th>When</th>
-          </tr>
-        </thead>
-        <tbody id="log-body">
-          <tr><td colspan="5" class="empty">Loading run history…</td></tr>
-        </tbody>
-      </table>
-    </section>
 
-    <section class="output-section" id="output-section" hidden>
-      <h2>Last run output</h2>
-      <pre id="output-body"></pre>
-    </section>
-  </main>
+      <div class="live-feed">
+        <div class="lf-head">Live Feed</div>
+        <div id="live-feed-list" class="lf-list"></div>
+      </div>
+    </aside>
+  </div>
 
   <footer>
     Runs log to a shared Supabase table via Supabase's public anon key (read/insert only, gated by row-level security) - this is a public demo, so run history is visible to everyone who opens this page.
