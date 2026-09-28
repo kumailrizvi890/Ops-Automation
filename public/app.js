@@ -59,8 +59,9 @@ function timeAgo(iso) {
 
 async function loadRuns() {
   try {
+    const knownWorkflows = JOBS.map((j) => j.id).join(",");
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/workflow_runs?select=*&order=created_at.desc&limit=25`,
+      `${SUPABASE_URL}/rest/v1/workflow_runs?select=*&workflow_name=in.(${knownWorkflows})&order=created_at.desc&limit=25`,
       { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
     );
     const rows = await res.json();
