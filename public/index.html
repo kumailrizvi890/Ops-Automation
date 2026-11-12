@@ -1,23 +1,25 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ops Automation — Scheduled Workflow Dashboard</title>
-<meta name="description" content="Real scheduled workflow automation dashboard - live job execution, not mocked timers." />
-<link rel="stylesheet" href="/styles.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f6f3ec" />
+  <title>Ops Automation — Watch the pipeline do the busywork</title>
+  <meta name="description" content="Live scheduled workflow automation: a job crawler, lead enrichment, interview scheduling and follow-up drafting. JavaScript + Supabase, on Vercel — real runs, no sample data." />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
       <span class="logo">OA</span>
-      <span class="brand-name">Ops<strong>Automation</strong></span>
+      <span class="brand-name">Ops <strong>Automation</strong></span>
+      <span class="live-pill"><span class="dot"></span>Pipeline live</span>
     </div>
-    <nav class="tabs" id="nav-tabs">
-      <button class="tab active" data-tab="overview">Overview</button>
-      <button class="tab" data-tab="workflows">Workflows</button>
-      <button class="tab" data-tab="activity">Activity</button>
-      <button class="tab" data-tab="schedule">Schedule</button>
+    <nav class="sections-nav" aria-label="Sections">
+      <a href="#demo">Live demo</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#modules">Modules</a>
+      <a href="#dashboard">Dashboard</a>
     </nav>
     <div class="header-stats">
       <div class="hstat"><span class="hlabel">Runs (last 25)</span><span class="hvalue" id="hs-runs">—</span></div>
@@ -31,122 +33,195 @@
     </div>
   </header>
 
-  <div class="layout">
-    <main class="main-panel">
+  <main>
+    <!-- Hero + looping core pipeline -->
+    <section class="hero">
+      <p class="eyebrow">⚙ Automation ops room</p>
+      <h1>Watch the pipeline <span class="accent">do the busywork.</span></h1>
+      <p class="lede">Ops Automation finds fresh job postings, enriches them with real company context, schedules interviews and drafts follow-ups — four small automations, each doing genuine work, running every day on Vercel Cron and logging every run to Supabase.</p>
+      <div class="hero-cta">
+        <a class="btn-primary" href="#demo">▶ Run the live demo</a>
+        <a class="btn-ghost" href="#modules">Inspect the modules</a>
+      </div>
+      <p class="hero-note">Live data — the demo below calls the real API and writes real runs to Supabase. No sample data.</p>
+      <noscript><p class="hero-note">JavaScript is required: this dashboard reads live data from Supabase and runs workflows via /api/run.</p></noscript>
 
-      <section id="panel-overview" class="panel-view active">
-        <div class="intro">
-          <h1>Scheduled task automation, running for real</h1>
-          <p>
-            Four small automations, each doing genuine work: a live remote-jobs crawl, a real
-            network check against sample leads, an actual free/busy interval-intersection
-            scheduler, and follow-up drafting from real date math. One runs automatically every
-            day via Vercel Cron; you can trigger any of them on demand and watch the log update
-            live below.
-          </p>
+      <div class="loop" aria-label="Pipeline overview, animating on loop">
+        <p class="loop-label">Core loop · Crawl → Enrich → Schedule → Follow-up · animating on loop</p>
+        <div class="loop-track">
+          <div class="loop-node" style="--i: 0"><span class="loop-icon">🕷️</span><strong>Crawl</strong><span>Fresh postings, every run</span></div>
+          <div class="loop-arrow" aria-hidden="true">→</div>
+          <div class="loop-node" style="--i: 1"><span class="loop-icon">🧬</span><strong>Enrich</strong><span>Live company context</span></div>
+          <div class="loop-arrow" aria-hidden="true">→</div>
+          <div class="loop-node" style="--i: 2"><span class="loop-icon">⏰</span><strong>Schedule</strong><span>Real overlapping slots</span></div>
+          <div class="loop-arrow" aria-hidden="true">→</div>
+          <div class="loop-node" style="--i: 3"><span class="loop-icon">🔁</span><strong>Follow-up</strong><span>Drafts when they’re due</span></div>
         </div>
+      </div>
+    </section>
 
-        <div class="stat-cards" id="stat-cards"></div>
+    <!-- 01 · Live demo: run console -->
+    <section id="demo" class="section" aria-labelledby="demo-heading">
+      <p class="section-kicker">01 · Live demo</p>
+      <h2 id="demo-heading">One run, start to finish</h2>
+      <p class="section-sub">Hit run and the pipeline steps through all four real workflows in order. The log narrates each step, output cards land as each stage finishes, and every stage below stays tappable — before, during and after the run — so you can inspect exactly what each module does.</p>
 
-        <div class="section-head">
-          <h2>Workflows</h2>
-          <span class="section-sub">Click a card's tab above or run one directly</span>
-        </div>
-        <div class="jobs" id="jobs-overview"></div>
-
-        <div class="section-head">
-          <h2>Recent activity</h2>
-          <button class="link-btn" data-goto="activity">View all →</button>
-        </div>
-        <table class="log-table compact">
-          <thead>
-            <tr><th>Workflow</th><th>Status</th><th>Duration</th><th>Source</th><th>When</th></tr>
-          </thead>
-          <tbody id="log-body-preview"><tr><td colspan="5" class="empty">Loading run history…</td></tr></tbody>
-        </table>
-      </section>
-
-      <section id="panel-workflows" class="panel-view">
-        <div class="section-head">
-          <h2>Run a workflow</h2>
-          <span class="section-sub">Every run is real — no timers, no canned output</span>
-        </div>
-        <div class="jobs jobs-large" id="jobs-full"></div>
-      </section>
-
-      <section id="panel-activity" class="panel-view">
-        <div class="section-head">
-          <h2>Run log</h2>
-          <div class="head-actions">
-            <select id="filter-workflow" class="filter-select">
-              <option value="">All workflows</option>
-            </select>
-            <button id="run-all-btn" class="run-all-btn">Run all now</button>
-            <button id="refresh" class="ghost-btn">Refresh</button>
+      <div class="console">
+        <div class="console-head">
+          <span class="traffic" aria-hidden="true"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+          <span class="console-title">ops-automation — run console</span>
+          <div class="console-controls">
+            <div class="speed" role="group" aria-label="Run speed">
+              <button id="speedNormal" class="speed-btn active" type="button">Normal</button>
+              <button id="speedFast" class="speed-btn" type="button">Fast ⚡</button>
+            </div>
+            <button id="pipelineReset" class="btn-small" type="button">Reset</button>
+            <button id="runPipelineBtn" class="btn-run" type="button">▶ Run pipeline</button>
           </div>
         </div>
-        <table class="log-table">
-          <thead>
-            <tr>
-              <th>Workflow</th>
-              <th>Status</th>
-              <th>Duration</th>
-              <th>Source</th>
-              <th>When</th>
-            </tr>
-          </thead>
-          <tbody id="log-body">
-            <tr><td colspan="5" class="empty">Loading run history…</td></tr>
-          </tbody>
-        </table>
-
-        <div class="output-section" id="output-section" hidden>
-          <h2>Last run output</h2>
-          <pre id="output-body"></pre>
+        <div class="console-status">
+          <span id="pipelineStatus">Status: <strong>idle — ready to run</strong></span>
+          <span id="pipelineStarted" class="muted"></span>
         </div>
-      </section>
-
-      <section id="panel-schedule" class="panel-view">
-        <div class="section-head">
-          <h2>Automation schedule</h2>
+        <div class="stage-row" id="stageRow" role="group" aria-label="Pipeline stages — tap to inspect">
+          <button class="stage-node selected" data-job="job-board-crawler" type="button"><span class="stage-icon">🕷️</span><span class="stage-name">Crawl</span><span class="stage-state">queued</span></button>
+          <button class="stage-node" data-job="crm-lead-enrichment" type="button"><span class="stage-icon">🧬</span><span class="stage-name">Enrich</span><span class="stage-state">queued</span></button>
+          <button class="stage-node" data-job="interview-scheduler" type="button"><span class="stage-icon">⏰</span><span class="stage-name">Schedule</span><span class="stage-state">queued</span></button>
+          <button class="stage-node" data-job="gmail-followup-drafts" type="button"><span class="stage-icon">🔁</span><span class="stage-name">Follow-up</span><span class="stage-state">queued</span></button>
         </div>
-        <div class="card">
-          <p>A Vercel Cron job hits <code>/api/cron</code> once a day and runs one randomly-selected workflow from the four below, logging it with source <code>scheduled</code> so it's visibly distinct from a visitor-triggered run in the log.</p>
-          <div class="kv-grid">
-            <div><span>Cron expression</span><strong>0 13 * * * (UTC, daily)</strong></div>
-            <div><span>Endpoint</span><strong>/api/cron</strong></div>
-            <div><span>Next scheduled run</span><strong id="sched-next">—</strong></div>
-            <div><span>Selection</span><strong>random of 4, logged as "scheduled"</strong></div>
+        <div class="console-grid">
+          <div class="console-col">
+            <h3>Run log</h3>
+            <div class="run-log" id="runLog" aria-live="polite"></div>
+          </div>
+          <div class="console-col">
+            <h3>Output — what the run produced</h3>
+            <div class="pipeline-output" id="pipelineOutput">
+              <p class="output-empty">Nothing yet. Output cards appear here as each stage finishes.</p>
+            </div>
           </div>
         </div>
-        <div class="card">
-          <h3>Candidate workflows</h3>
-          <div id="schedule-list" class="schedule-list"></div>
-        </div>
-      </section>
+        <div class="inspector" id="moduleInspector">
+          <div class="inspector-head">
+            <h3 id="inspectorTitle">🕷️ Crawl — Finds fresh postings</h3>
+            <span class="muted" id="inspectorMeta">Stage 1 of 4 · JavaScript module · reads and writes Supabase</span>
+          </div>
+          <div class="inspector-grid">
+            <div>
+              <h4>Input → Output</h4>
+              <p id="inspectorIo">Input: the search term “software engineer” against Remotive’s public jobs API (20 results per call). Output: a live count of current listings plus the first three — title @ company — written to Supabase as a run row.</p>
+            </div>
+            <div>
+              <h4>How it works</h4>
+              <pre id="inspectorHow">GET https://remotive.com/api/remote-jobs
+  ?search=software%20engineer&amp;limit=20
 
-    </main>
-
-    <aside class="sidebar-right">
-      <div class="card system-card">
-        <div class="sc-head">System</div>
-        <div class="kv-grid kv-grid-tight">
-          <div><span>Storage</span><strong>Supabase (anon, RLS)</strong></div>
-          <div><span>Table</span><strong class="mono">workflow_runs</strong></div>
-          <div><span>Runtime</span><strong>Vercel Node functions</strong></div>
-          <div><span>Session</span><strong id="sc-uptime">0s</strong></div>
+count = data.jobs.length
+sample = jobs.slice(0, 3)  // “title @ company”</pre>
+            </div>
+            <div>
+              <h4>When it fails</h4>
+              <p id="inspectorFails">If Remotive is unreachable, returns a non-200 status, or the JSON has no jobs array, the run fails and is logged as failed — the other workflows still run.</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="live-feed">
-        <div class="lf-head">Live Feed</div>
-        <div id="live-feed-list" class="lf-list"></div>
+      <div class="output-section" id="output-section" hidden>
+        <h3>Raw API response — last run</h3>
+        <pre class="output-body" id="output-body"></pre>
       </div>
-    </aside>
-  </div>
+    </section>
 
-  <footer>
-    Runs log to a shared Supabase table via Supabase's public anon key (read/insert only, gated by row-level security) - this is a public demo, so run history is visible to everyone who opens this page.
+    <!-- 02 · Pipeline -->
+    <section id="pipeline" class="section" aria-labelledby="pipeline-heading">
+      <p class="section-kicker">02 · The pipeline</p>
+      <h2 id="pipeline-heading">Four small jobs, one reliable chain</h2>
+      <p class="section-sub">Each stage does one thing, writes its result to Supabase, and hands off. If a stage fails, the chain logs the failure and moves on — the next day’s cron run picks it up again.</p>
+      <div class="pipeline-head-row">
+        <label class="filter-label">Filter
+          <select id="filter-workflow">
+            <option value="all">All workflows</option>
+            <option value="job-board-crawler">Job board crawler</option>
+            <option value="crm-lead-enrichment">CRM lead enrichment</option>
+            <option value="interview-scheduler">Interview scheduler</option>
+            <option value="gmail-followup-drafts">Follow-up drafts</option>
+          </select>
+        </label>
+        <button id="run-all-btn" class="btn-ghost small" type="button">Run all at once</button>
+      </div>
+      <div class="jobs" id="jobs-overview"></div>
+      <p class="muted small">Runs write to Supabase and appear in the dashboard below. “Run all at once” runs the four workflows one after another, the same order as the pipeline demo.</p>
+    </section>
+
+    <!-- 03 · Modules -->
+    <section id="modules" class="section" aria-labelledby="modules-heading">
+      <p class="section-kicker">03 · Modules</p>
+      <h2 id="modules-heading">Built as modules, not a monolith</h2>
+      <p class="section-sub">Every module is independently testable and swappable — a new job board is a new crawler, not a rewrite. Tap a card to inspect it in the run console above.</p>
+      <div class="module-grid" id="moduleGrid"></div>
+    </section>
+
+    <!-- 04 · Dashboard -->
+    <section id="dashboard" class="section" aria-labelledby="dashboard-heading">
+      <p class="section-kicker">04 · Dashboard</p>
+      <h2 id="dashboard-heading">The season at a glance</h2>
+      <p class="section-sub">Live numbers from Supabase — how much the pipeline has run, how reliably, and what it did most recently.</p>
+      <div class="stat-cards" id="stat-cards"></div>
+      <div class="dash-grid">
+        <div class="dash-col">
+          <div class="section-head">
+            <h2>Recent activity</h2>
+            <span><button class="btn-small refresh" id="refresh" type="button">Refresh</button> <button class="link-btn" id="view-all-btn" type="button">View all →</button></span>
+          </div>
+          <table class="log-table">
+            <thead>
+              <tr><th>Workflow</th><th>Status</th><th>Duration</th><th>Source</th><th>When</th></tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+          </table>
+
+          <div class="section-head"><h2>Schedule</h2><span class="section-sub" id="sched-next">—</span></div>
+          <p class="section-sub">A Vercel Cron job hits <code class="mono">/api/cron</code> once a day and runs one randomly-selected workflow from the four below, logging it with source <code class="mono">scheduled</code> so it’s visibly distinct from a visitor-triggered run in the log.</p>
+          <p class="section-sub">Cron expression: <code class="mono">0 13 * * *</code> (UTC, daily) · Endpoint: <code class="mono">/api/cron</code></p>
+          <div class="schedule-list" id="schedule-list"></div>
+        </div>
+        <aside class="dash-col">
+          <div class="system-card">
+            <h3>System</h3>
+            <dl>
+              <dt>Storage</dt><dd>Supabase (anon, RLS)</dd>
+              <dt>Table</dt><dd class="mono">workflow_runs</dd>
+              <dt>Runtime</dt><dd>Vercel Node functions</dd>
+              <dt>Session</dt><dd><span id="sc-uptime">0s</span></dd>
+            </dl>
+          </div>
+          <div class="feed-card">
+            <h3>Live feed</h3>
+            <div class="live-feed" id="live-feed-list" aria-live="polite"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Under the hood -->
+    <section class="section under-hood" aria-labelledby="hood-heading">
+      <p class="section-kicker">Under the hood</p>
+      <h2 id="hood-heading">Small, honest, observable</h2>
+      <div class="hood-grid">
+        <div class="hood-item"><strong>JavaScript</strong><span>Pipeline, modules and dashboard — one script, no framework.</span></div>
+        <div class="hood-item"><strong>Supabase</strong><span>Workflow runs and counts, read and written over REST.</span></div>
+        <div class="hood-item"><strong>Cron</strong><span>Daily 05:00 PT — /api/cron runs one randomly chosen workflow.</span></div>
+        <div class="hood-item"><strong>Run log</strong><span>Every run, manual or scheduled, logged with status and duration.</span></div>
+        <div class="hood-item"><strong>Timeouts</strong><span>External calls are capped (6 s crawl, 5 s per lead) so a slow site can’t hang a run.</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p><strong>Ops Automation</strong> — pipeline redesign, ported into the live app by Kumail Rizvi.</p>
+    <p>Runs log to a shared Supabase table via Supabase’s public anon key (read/insert only, gated by row-level security) — this is a public demo, so run history is visible to everyone who opens this page.</p>
+    <p><a href="https://github.com/kumailrizvi890/Ops-Automation">github.com/kumailrizvi890/Ops-Automation</a></p>
   </footer>
 
   <script src="/app.js"></script>
