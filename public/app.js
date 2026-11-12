@@ -294,30 +294,24 @@ function renderStats() {
 }
 
 // ---------- run history (Supabase REST, read-only) ----------
+// Columns match the table header in index.html:
+// Workflow | Status | Duration | Source | When
+function runRow(r) {
+  const when = new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return `<tr>
+    <td>${escapeHtml(r.workflow_name)}</td>
+    <td><span class="status-badge ${r.status === "success" ? "success" : "failed"}">${r.status}</span></td>
+    <td class="mono">${r.duration_ms ?? "\u2014"}ms</td>
+    <td class="mono">${escapeHtml(r.source ?? "\u2014")}</td>
+    <td class="mono">${when}</td>
+  </tr>`;
+}
+
 function renderLogRows() {
   const rows = state.runs.slice(0, state.showAll ? 25 : 5);
-  const html = rows.length
-    ? rows
-        .map(
-          (r) => `<tr>
-            <td class="mono">${new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</td>
-            <td>${escapeHtml(r.workflow_name)}</td>
-            <td><span class="status-badge ${r.status === "success" ? "success" : "failed"}">${r.status}</span></td>
-            <td class="mono">${r.duration_ms ?? "\u2014"}ms</td>
-          </tr>`,
-        )
-        .join("")
-    : `<tr><td colspan="4" class="empty">No runs in the last 25 entries.</td></tr>`;
-  const previewRows = state.runs.slice(0, 5).map(
-    (r) => `<tr>
-      <td class="mono">${new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</td>
-      <td>${escapeHtml(r.workflow_name)}</td>
-      <td><span class="status-badge ${r.status === "success" ? "success" : "failed"}">${r.status}</span></td>
-      <td class="mono">${r.duration_ms ?? "\u2014"}ms</td>
-    </tr>`,
-  ).join("") || `<tr><td colspan="4" class="empty">No runs in the last 25 entries.</td></tr>`;
-  if (logBody) logBody.innerHTML = html;
-  if (logBodyPreview) logBodyPreview.innerHTML = previewRows;
+  const emptyRow = `<tr><td colspan="5" class="empty">No runs in the last 25 entries.</td></tr>`;
+  if (logBody) logBody.innerHTML = rows.length ? rows.map(runRow).join("") : emptyRow;
+  if (logBodyPreview) logBodyPreview.innerHTML = state.runs.length ? state.runs.slice(0, 5).map(runRow).join("") : emptyRow;
 }
 
 async function fetchTotalCount() {
@@ -339,7 +333,7 @@ async function fetchTotalCount() {
 
 async function loadRuns() {
   try {
-    let url = `${SUPABASE_URL}/rest/v1/workflow_runs?select=id,workflow_name,status,duration_ms,created_at&order=created_at.desc&limit=25`;
+    let url = `${SUPABASE_URL}/rest/v1/workflow_runs?select=id,workflow_name,status,duration_ms,source,created_at&order=created_at.desc&limit=25`;
     if (state.filter !== "all") url += `&workflow_name=eq.${state.filter}`;
     const res = await fetch(url, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
@@ -351,7 +345,7 @@ async function loadRuns() {
     pushFeed("success", `Loaded ${state.runs.length} recent runs.`);
   } catch (err) {
     console.error("loadRuns failed", err);
-    const message = `<tr><td colspan="4" class="empty">Error loading run history: ${escapeHtml(err.message)}</td></tr>`;
+    const message = `<tr><td colspan="5" class="empty">Error loading run history: ${escapeHtml(err.message)}</td></tr>`;
     if (logBody) logBody.innerHTML = message;
     if (logBodyPreview) logBodyPreview.innerHTML = message;
     pushFeed("failed", "Could not load run history.");
